@@ -9,10 +9,6 @@ Replace me with the package manager you are using.
 
 Explaining how to install the project.
 
-```bash
-npm install
-npm start
-```
 
 ## More Details
 
