@@ -21,4 +21,6 @@ Replace me with more details about the project.
 
 ## Contributors
 
-Replace me with the contributors of the project and their GitHub profiles.
+Tessa - VikingQueen85
+Sherelynn - Sherelynn
+Clark - 
