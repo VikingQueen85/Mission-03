@@ -4,7 +4,7 @@ require("dotenv").config()
 
 const config = {
   port: process.env.PORT,
-  openAiApiKey: process.env.OPENAI_API_KEY,
+  openaiApiKey: process.env.OPENAI_API_KEY,
 }
 
 // Validate the configuration
