@@ -1,16 +1,9 @@
-//========== PORT AND API KEY ==========//
 
-require("dotenv").config()
+// ./src/config/index.js
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') }); // Load .env file from project root
 
-const config = {
-  port: process.env.PORT,
-  openaiApiKey: process.env.OPENAI_API_KEY,
-}
-
-// Validate the configuration
-if (!config.openAiApiKey) {
-  console.error("Missing OpenAI API key in .env file")
-  process.exit(1) // Exit if API key is missing
-}
-
-module.exports = config
+module.exports = {
+    // IMPORTANT: Load API Key securely from environment variables
+    apiKey: process.env.REACT_APP_GEMINI_API_KEY, // Ensure this environment variable is set!
+    port: process.env.PORT || 5000 // Use environment port or default to 5000
+};

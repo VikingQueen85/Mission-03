@@ -1,19 +1,17 @@
 
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import InterviewBot from './components/InterviewBot'; // Adjust the import path as necessary
+import InterviewBot from '../src/components/InterviewBot'; 
+import './App.css'; 
 
 function App() {
   return (
-    <div>
-      <nav>
-        <Link to="/">Home</Link>
-        <Link to="/chat">Chat</Link>
-      </nav>
-    <Routes> {/* No need to wrap with Router as it's done in index.js */}
-      <Route path="/" element={<h1>Hello World</h1>} />
-      <Route path="/chat" element={<InterviewBot />} />
-    </Routes>
+    <div className="App">
+      <header className="App-header">
+        <h1>AI Interview Practice</h1>
+      </header>
+      <main>
+        <InterviewBot />
+      </main>
     </div>
   );
 }
