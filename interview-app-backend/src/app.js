@@ -1,38 +1,27 @@
 const express = require("express")
-const path = require("path")
-const bodyParser = require("body-parser")
 const cors = require("cors")
+const interviewRoutes = require("./routes/interviewRoutes")
 
+//========== INITIALISE EXPRESS ==========//
 const app = express()
-const PORT = process.env.PORT || 5000
 
-// Middleware setup
-app.use(cors())
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(express.static(path.join(__dirname, "dist")))
+//========== MIDDLEWARE ==========//
+app.use(cors()) // Enable CORS fro all origins (to be adjusted)
+app.use(express.json()) // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })) // If form data needed to be parsed
 
-// Route for specific user requests
-app.get("/user/:id", (req, res) => {
-  // Log the user ID
-  console.log("User ID requested:", req.params.id)
-
-  // For now, we send the index.html; later it will return user data.
-  res.sendFile(path.join(__dirname, "dist", "index.html"))
+//========== BASIC ROOT ROUTE ==========// (TO BE REMOVED)
+app.get("/", (req, res) => {
+  res.send("API is running")
 })
 
-// Test route to verify server functionality
-app.get("/test", (req, res) => {
-  res.send("Test route works!")
-})
+//========== ROUTES ==========//
+app.use("/api/interview", interviewRoutes) // Mount interview routes
 
-// Error handling middleware for server errors
+//========== BASIC ERROR HANDLING ==========//
 app.use((err, req, res, next) => {
   console.error(err.stack)
   res.status(500).send("Something broke!")
 })
 
-// Starting the server
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`)
-})
+module.exports = app
