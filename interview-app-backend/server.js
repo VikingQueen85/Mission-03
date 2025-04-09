@@ -1,5 +1,5 @@
 //========== MAIN ENTRY POINT (server.js) ==========//
-const app = express("./src/app")
+const app = require("./src/app")
 const config = require("./src/config/index")
 
 const port = config.port || 5000
