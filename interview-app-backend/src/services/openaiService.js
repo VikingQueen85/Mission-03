@@ -9,9 +9,7 @@ const client = new OpenAI({
 })
 
 //========== STORE CONVERSATION HISTORY ==========//
-// DATABASE TO BE USED LATER
-// FOR NOW, IN-MEMORY OBJECT WILL BE USED
-const conversationHistory = {} // KEY: SESSION ID, VALUE: ARRAY OF MESSAGES
+const conversationHistory = {}
 
 //========== FUNCTION TO GENERATE INTERVIEW QUESTIONS ==========//
 const generateInterviewQuestions = async (
@@ -24,11 +22,10 @@ const generateInterviewQuestions = async (
 
   //========== CHECK IF SESSION EXISTS ==========//
   if (!conversationHistory[sessionId]) {
-    // If the session does not exist, create a new one
     conversationHistory[sessionId] = [
       {
         role: "system",
-        content: prompt, // The initial "Tell me about yourself." will be added by the controller logic
+        content: prompt, 
       },
     ]
   }
