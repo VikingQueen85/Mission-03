@@ -10,6 +10,10 @@ function InterviewBot() {
   const [questionCount, setQuestionCount] = useState(0);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);  // State to control the welcome message
+  const [showCompletionMessage, setShowCompletionMessage] = useState(false); // Initially hidden
+  const [showMessages, setShowMessages] = useState(false); // Hide message box initially
+
 
   const keywordQuestionsMapping = {
     developer: [
@@ -88,6 +92,9 @@ function InterviewBot() {
     }
   };
 
+/************************************************************************* */
+
+
   const handleJobTitleSubmit = async () => {
     const trimmedJobTitle = jobTitle.trim();
 
@@ -121,9 +128,13 @@ function InterviewBot() {
     setQuestionCount(0);
     setJobTitle("");
 
-    // Ask first question
-    askNextQuestion(generatedQuestions);
-  };
+      
+        setShowWelcomeMessage(false);    // Hide welcome message and start interview
+        setShowCompletionMessage(false); // Hide completion message
+        setShowMessages(true);           // Show message box after starting interview
+        // Ask first question
+        askNextQuestion(generatedQuestions);
+      };
 
   const askNextQuestion = (questionsList) => {
     if (questionCount < questionsList.length) {
@@ -139,8 +150,11 @@ function InterviewBot() {
         ...prevMessages,
         { text: finalMessage, isUser: false }
       ]);
+      setShowCompletionMessage(true); // Show completion message
     }
   };
+
+/************************************************************************* */
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -154,50 +168,71 @@ function InterviewBot() {
     }
   };
 
-  const renderMessage = (msg, index) => {
-    const messageStyle = {
-      padding: "10px",
-      margin: "5px 0",
-      borderRadius: "5px",
-      color: msg.isUser ? "black" : "white",
-      backgroundColor: msg.isUser ? "#e0f7fa" : "#333",
-      textAlign: msg.isUser ? "right" : "left",
-    };
+  // Moved to CSS :)
+  // const renderMessage = (msg, index) => {
+  //   const messageStyle = {
+  //     padding: "10px",
+  //     margin: "5px 0",
+  //     borderRadius: "5px",
+  //     color: msg.isUser ? "black" : "white",
+  //     backgroundColor: msg.isUser ? "#e0f7fa" : "#333",
+  //     textAlign: msg.isUser ? "right" : "left",
+  //   };
 
-    return (
-      <div key={index} style={messageStyle}>
-        {msg.text}
-      </div>
-    );
-  };
+  //   return (
+  //     <div key={index} style={messageStyle}>
+  //       {msg.text}
+  //     </div>
+  //   );
+  // };
+
 
   return (
     <div className="interview-bot">
       <h2>AI Interview Bot</h2>
 
-      {questionCount === 0 && (
+   {/* Welcome message and job title input */}
+   {showWelcomeMessage && (
         <div>
-          <input
-            id="job-title"
-            name="job-title"
-            value={jobTitle}
-            onChange={(e) => setJobTitle(e.target.value)}
-            placeholder="Enter job title"
-            autoComplete="off"
-          />
-          <button onClick={handleJobTitleSubmit} disabled={loading}>
-            {loading ? "Loading..." : "Start Interview"}
-          </button>
+          <div>Welcome! What job are you applying for?</div>
+          <div className="job-input-container">
+            <input
+              id="job-title"
+              name="job-title"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="Enter job title"
+              autoComplete="off"
+            />
+            <button onClick={handleJobTitleSubmit} disabled={loading}>
+              {loading ? "Loading..." : "Start Interview"}
+            </button>
+          </div>
         </div>
       )}
 
-      {messages.map(renderMessage)}
+      {/* Message box for conversation */}
+      {showMessages && (
+      <div className="message-box">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`message ${msg.isUser ? "user-message" : "bot-message"}`}
+          >
+            {msg.text}
+          </div>
+        ))}
+      </div>
+    )}
 
+
+      {/* User input box and send button */}
       {questionCount > 0 && questionCount < questions.length && (
         <>
           <input
             id="user-response"
             name="user-response"
+           className="styled-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Your answer"
@@ -209,9 +244,11 @@ function InterviewBot() {
         </>
       )}
 
-      {questionCount >= questions.length && (
-        <p>Interview completed. Thank you for your time!</p>
-      )}
+
+      {/* Interview completion message */}
+      {showMessages && (questionCount >= questions.length || showCompletionMessage) && (
+  <p>Interview completed. Thank you for your time!</p>
+)}
     </div>
   );
 }
