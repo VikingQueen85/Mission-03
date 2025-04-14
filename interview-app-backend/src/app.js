@@ -1,4 +1,3 @@
-
 const express = require("express")
 const cors = require("cors")
 const interviewRoutes = require("./routes/interviewRoutes")
@@ -7,9 +6,9 @@ const interviewRoutes = require("./routes/interviewRoutes")
 const app = express()
 
 //========== MIDDLEWARE ==========//
-app.use(cors()) 
-app.use(express.json()) 
-app.use(express.urlencoded({ extended: true })) 
+app.use(cors())
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 //========== BASIC ROOT ROUTE ==========// (TO BE REMOVED)
 app.get("/", (req, res) => {
@@ -17,7 +16,7 @@ app.get("/", (req, res) => {
 })
 
 //========== ROUTES ==========//
-app.use("/api/interview", interviewRoutes) 
+app.use("/api/interview", interviewRoutes)
 
 //========== BASIC ERROR HANDLING ==========//
 app.use((err, req, res, next) => {
