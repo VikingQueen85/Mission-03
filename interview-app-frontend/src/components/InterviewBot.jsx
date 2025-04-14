@@ -156,18 +156,27 @@ function InterviewBot() {
     setMessages((prevMessages) => [...prevMessages, { text: userMessage, isUser: true }]);
     setInput("");
 
-    // Send answer and move to the next question
-    if (questionCount === questions.length) {
+    const isLastQuestion = questionCount === questions.length;
+
+    if (isLastQuestion) {
       setTimeout(() => {
-        const finalMessage = "Interview completed. Thank you for your time!";
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { text: finalMessage, isUser: false },
-        ]);
         setShowCompletionMessage(true);
       }, 300); 
       return;
     }
+
+    // // Send answer and move to the next question
+    // if (questionCount === questions.length) {
+    //   setTimeout(() => {
+    //     const finalMessage = "Interview completed. Thank you for your time!";
+    //     setMessages((prevMessages) => [
+    //       ...prevMessages,
+    //       { text: finalMessage, isUser: false },
+    //     ]);
+    //     setShowCompletionMessage(true);
+    //   }, 300); 
+    //   return;
+    // }
   
     askNextQuestion(questions);
   };
@@ -249,7 +258,7 @@ function InterviewBot() {
 
 
       {/* Interview completion message */}
-      {showMessages && (questionCount >= questions.length || showCompletionMessage) && (
+      {showMessages && showCompletionMessage && (
   <p>Interview completed. Thank you for your time!</p>
 )}
     </div>
