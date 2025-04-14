@@ -136,36 +136,40 @@ function InterviewBot() {
         askNextQuestion(generatedQuestions);
       };
 
-  const askNextQuestion = (questionsList) => {
-    if (questionCount < questionsList.length) {
-      const nextQuestion = questionsList[questionCount];
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: nextQuestion, isUser: false }
-      ]);
-      setQuestionCount((prevCount) => prevCount + 1);
-    } else {
-      const finalMessage = "Interview completed. Thank you for your time!";
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: finalMessage, isUser: false }
-      ]);
-      setShowCompletionMessage(true); // Show completion message
-    }
-  };
+      const askNextQuestion = (questionsList) => {
+        if (questionCount < questionsList.length) {
+          const nextQuestion = questionsList[questionCount];
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { text: nextQuestion, isUser: false }
+          ]);
+          setQuestionCount((prevCount) => prevCount + 1);
+        }
+      };
 
 /************************************************************************* */
 
   const handleSend = () => {
     if (!input.trim()) return;
 
-    setMessages((prevMessages) => [...prevMessages, { text: input, isUser: true }]);
+    const userMessage = input;
+    setMessages((prevMessages) => [...prevMessages, { text: userMessage, isUser: true }]);
     setInput("");
 
     // Send answer and move to the next question
-    if (questionCount < questions.length) {
-      askNextQuestion(questions);
+    if (questionCount === questions.length) {
+      setTimeout(() => {
+        const finalMessage = "Interview completed. Thank you for your time!";
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { text: finalMessage, isUser: false },
+        ]);
+        setShowCompletionMessage(true);
+      }, 300); 
+      return;
     }
+  
+    askNextQuestion(questions);
   };
 
   // Moved to CSS :)
@@ -227,22 +231,21 @@ function InterviewBot() {
 
 
       {/* User input box and send button */}
-      {questionCount > 0 && questionCount < questions.length && (
-        <>
-          <input
-            id="user-response"
-            name="user-response"
-           className="styled-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Your answer"
-            disabled={questionCount >= questions.length}
-          />
-          <button onClick={handleSend} disabled={questionCount >= questions.length}>
-            Send
-          </button>
-        </>
-      )}
+      {questionCount > 0 && questionCount <= questions.length && !showCompletionMessage && (
+  <>
+    <input
+      id="user-response"
+      name="user-response"
+      className="styled-input"
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+      placeholder="Your answer"
+    />
+    <button onClick={handleSend}>
+      Send
+    </button>
+  </>
+)}
 
 
       {/* Interview completion message */}
