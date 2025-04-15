@@ -1,138 +1,209 @@
+import React, { useState, useEffect, useRef } from "react"
+import "./InterviewBot.css"
 
-import React, { useState, useEffect, useRef } from "react";
-import "./InterviewBot.css";
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
+const INITIAL_BOT_MESSAGE = `Welcome!! To start the interview simulation, please tell me the job title you are applying for.`
+const SECOND_BOT_MESSAGE = `Okay, let's start the interview for the role: `
 
-const API_ENDPOINT = import.meta.env.REACT_APP_GEMINI_API_KEY || "http://localhost:5000/api/interview-chat";
-const INITIAL_BOT_MESSAGE = "Welcome!! To start the interview simulation, please tell me the job title you are applying for.";
-const FIRST_QUESTION = "Tell me about yourself.";
+const InterviewBot = () => {
+  /*========== HOOKS ==========*/
+  const messagesEndRef = useRef(null)
 
-function InterviewBot() {
-    const [jobTitle, setJobTitle] = useState("");
-    const [hasJobTitle, setHasJobTitle] = useState(false);
-    const [messages, setMessages] = useState([{ role: "bot", text: INITIAL_BOT_MESSAGE }]);
-    const [input, setInput] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-    const [isComplete, setIsComplete] = useState(false);
-    const [error, setError] = useState(null);
-    const messagesEndRef = useRef(null);
+  /*========== STATES==========*/
+  const [isLoading, setIsLoading] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const [error, setError] = useState(null)
+  const [hasJobTitle, setHasJobTitle] = useState(false)
+  const [jobTitle, setJobTitle] = useState("")
+  const [input, setInput] = useState("")
+  const [messages, setMessages] = useState([
+    { role: "bot", text: INITIAL_BOT_MESSAGE },
+  ]) // Initial message to be displayed before starting the interview
 
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+  /*========== FUNCTIONS ==========*/
 
-    useEffect(() => {
-        if (input) setError(null);
-    }, [input]);
+  // This function handles the submission of the job title input
+  const handleJobTitleSubmit = e => {
+    e.preventDefault()
 
-    const handleJobTitleSubmit = (e) => {
-        e.preventDefault();
-        const trimmedJobTitle = input.trim();
-        if (!trimmedJobTitle) return;
+    // Trim and capitalize the job title
+    const trimmedJobTitle = input
+      .trim()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
 
-        setJobTitle(trimmedJobTitle);
-        setHasJobTitle(true);
-        setMessages((prev) => [
-            ...prev,
-            { role: "bot", text: `Okay, let's start the interview for the ${trimmedJobTitle} role.` },
-            { role: "bot", text: FIRST_QUESTION },
-        ]);
-        setInput("");
-    };
+    if (!trimmedJobTitle) return
 
-    const handleSendAnswer = (e) => {
-        e.preventDefault();
-        if (!input.trim() || isLoading || isComplete) return;
+    setJobTitle(trimmedJobTitle)
 
-        const userAnswer = input.trim();
-        setMessages((prev) => [...prev, { role: "user", text: userAnswer }]);
-        setInput("");
-        getBotResponse([...messages, { role: "user", text: userAnswer }]);
-    };
+    setHasJobTitle(true)
 
-    const getBotResponse = async (currentMessages) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const response = await fetch(API_ENDPOINT, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jobTitle, messages: currentMessages }),
-            });
+    setMessages(prev => [
+      ...prev,
+      {
+        role: "bot",
+        text: SECOND_BOT_MESSAGE + trimmedJobTitle,
+      },
+    ]) // Second bot message to be displayed with the job title
+    setInput("")
 
-            if (!response.ok) {
-                const responseBody = await response.json();
-                setError(responseBody?.error || `API request failed (${response.status} ${response.statusText})`);
-                return;
-            }
+    // Send EMPTY messages array to backend for first question generation: "Tell me about yourself"
+    getBotResponse(trimmedJobTitle, [])
+  }
 
-            const responseBody = await response.json();
-            setMessages((prev) => [...prev, { role: "bot", text: responseBody.nextBotMessage }]);
-            setIsComplete(responseBody.isComplete);
-        } catch (err) {
-            console.error("API call failed:", err);
-            setError("An unexpected error occurred. Please try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  // This function handles the submission of the user answer input
+  const handleSendAnswer = e => {
+    e.preventDefault()
 
-    const renderMessage = (msg, index) => (
-        <div key={index} className={`message ${msg.role === "user" ? "user-message" : "bot-message"}`}>
-            {msg.text.split("\n").map((line, i) => (
-                <span key={i}>
-                    {line}
-                    <br />
-                </span>
-            ))}
-        </div>
-    );
+    if (!input.trim() || isLoading || isComplete) return
 
-    const renderInputForm = () => {
-        if (isComplete) {
-            return <p className="completion-message">Interview completed. Thank you for your time!</p>;
-        }
+    const userAnswer = input.trim()
 
-        const inputProps = {
-            type: "text",
-            value: input,
-            onChange: (e) => setInput(e.target.value),
-            disabled: isLoading,
-            autoComplete: "off",
-        };
+    setMessages(prev => [...prev, { role: "user", text: userAnswer }])
 
-        const buttonProps = {
-            type: "submit",
-            disabled: isLoading || !input.trim(),
-        };
+    setInput("")
 
-        if (!hasJobTitle) {
-            return (
-                <form onSubmit={handleJobTitleSubmit} className="input-form">
-                    <input {...inputProps} placeholder="Enter job title to begin..." aria-label="Job Title Input" />
-                    <button {...buttonProps}>Start Interview</button>
-                </form>
-            );
-        }
+    // Send the job title and the current messages to the backend
+    getBotResponse(jobTitle, [...messages, { role: "user", text: userAnswer }])
+  }
 
-        return (
-            <form onSubmit={handleSendAnswer} className="input-form">
-                <input {...inputProps} placeholder="Type your answer..." aria-label="User Answer Input" />
-                <button {...buttonProps}>{isLoading ? "Thinking..." : "Send"}</button>
-            </form>
-        );
-    };
+  // This function fetches the bot response from the backend API
+  const getBotResponse = async (jobTitle, currentMessages) => {
+    setIsLoading(true)
+
+    setError(null)
+
+    try {
+      const response = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobTitle, messages: currentMessages }),
+      })
+
+      const responseBody = await response.json()
+
+      if (!response.ok) {
+        setError(
+          responseBody?.error ||
+            `API request failed (${response.status} ${response.statusText})`
+        )
+        return
+      }
+
+      setMessages(prev => [
+        ...prev,
+        { role: "bot", text: responseBody.nextBotMessage },
+      ])
+
+      setIsComplete(responseBody.isComplete)
+    } catch (err) {
+      console.error("API call failed:", err)
+
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // This function renders each message in the chat
+  const renderMessage = (msg, index) => (
+    <div
+      key={index}
+      className={`message ${
+        msg.role === "user" ? "user-message" : "bot-message"
+      }`}>
+      {msg.text.split("\n").map((line, i) => (
+        <span key={i}>
+          {line}
+          <br />
+        </span>
+      ))}
+    </div>
+  )
+
+  // This function renders the input form for the user to enter their answer
+  const renderInputForm = () => {
+    // If the interview is complete, show a completion message
+    if (isComplete) {
+      return (
+        <p className="completion-message">
+          Interview completed. Thank you for your time!
+        </p>
+      )
+    }
+
+    // Input Properties
+    const inputProps = {
+      type: "text",
+      value: input,
+      onChange: e => setInput(e.target.value),
+      disabled: isLoading,
+      autoComplete: "off",
+    }
+
+    // Button properties
+    const buttonProps = {
+      type: "submit",
+      disabled: isLoading || !input.trim(),
+    }
+
+    //  If the user hasn't entered a job title yet, show the job title input form
+    if (!hasJobTitle) {
+      return (
+        <form onSubmit={handleJobTitleSubmit} className="input-form">
+          <input
+            {...inputProps}
+            placeholder="Enter job title to begin..."
+            aria-label="Job Title Input"
+          />
+          <button {...buttonProps}>Start Interview</button>
+        </form>
+      )
+    }
 
     return (
-        <div className="interview-bot">
-            <div className="messages-container">
-                {messages.map(renderMessage)}
-                {isLoading && <div className="message bot-message typing-indicator"><span>.</span><span>.</span><span>.</span></div>}
-                {error && <div className="message error-message">{error}</div>}
-                <div ref={messagesEndRef} />
-            </div>
-            {renderInputForm()}
-        </div>
-    );
+      // If the user has entered a job title, show the answer input form
+      <form onSubmit={handleSendAnswer} className="input-form">
+        <input
+          {...inputProps}
+          placeholder="Type your answer..."
+          aria-label="User Answer Input"
+        />
+        <button {...buttonProps}>{isLoading ? "Thinking..." : "Send"}</button>
+      </form>
+    )
+  }
+
+  /*========== useEffects ==========*/
+
+  // Automatic scrolling to the latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  // Clear error message when input changes
+  useEffect(() => {
+    if (input) setError(null)
+  }, [input])
+
+  return (
+    <div className="interview-bot">
+      <div className="messages-container">
+        {messages.map(renderMessage)}
+        {isLoading && (
+          <div className="message bot-message typing-indicator">
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
+          </div>
+        )}
+        {error && <div className="message error-message">{error}</div>}
+        <div ref={messagesEndRef} />
+      </div>
+      {renderInputForm()}
+    </div>
+  )
 }
 
-export default InterviewBot;
+export default InterviewBot
