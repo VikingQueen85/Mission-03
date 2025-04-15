@@ -90,15 +90,19 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
     ],
   }
 
+  // Logging the API URL, request body, and prompt for debugging
   console.log(
+    // Log the API URL (excluding sensitive information)
     "Sending request to Gemini API URL:",
     GEMINI_API_URL.replace(config.apiKey, "[REDACTED_KEY]") // Don't log the full key
   )
   console.log(
+    // Log the request body, omitting the prompt text for security
     "Gemini Request Body (excluding prompt text):",
     JSON.stringify({ ...apiRequestBody, contents: "[PROMPT OMITTED]" }, null, 2)
   )
   console.log(
+    // Log the prompt text separately for debugging
     "Prompt being sent to Gemini (first ~200 chars):",
     prompt.substring(0, 200) + "..."
   )
@@ -224,18 +228,22 @@ const processInterviewTurn = async (jobTitle, messages) => {
 
   let prompt
 
+  // If the user has answered enough questions, generate feedback
+  // Otherwise, generate the next question
   if (shouldGenerateFeedback) {
     console.log(
       `Generating feedback for "${jobTitle}" after ${userTurns} user responses.`
     )
     prompt = generateFeedbackPrompt(trimmedJobTitle, formattedHistory)
   } else {
+    // If max questions not reached, generate the next question
     const questionNumber = userTurns + 1 // Calculate which question number this is
     console.log(`Generating question ${questionNumber} for "${trimmedJobTitle}`)
     prompt = generateQuestionPrompt(trimmedJobTitle, formattedHistory)
   }
 
   try {
+    // Call the Gemini API with the generated prompt
     const generatedText = await callGeminiApi(prompt, shouldGenerateFeedback)
     return {
       nextBotMessage: generatedText,
