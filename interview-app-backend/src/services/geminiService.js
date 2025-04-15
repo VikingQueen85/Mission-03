@@ -215,7 +215,7 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
 
 const processInterviewTurn = async (jobTitle, messages) => {
   // Constants
-  const MAX_INTERVIEW_QUESTIONS = 6
+  const MAX_INTERVIEW_QUESTIONS = 7 //  Including "Tell me about yourself"
 
   const trimmedJobTitle = jobTitle.trim()
   const formattedHistory = formatMessagesForPrompt(messages)
