@@ -6,7 +6,6 @@ import InterviewBot from './components/InterviewBot'; // Adjust the import path 
 import './App.css';
 
 function App() {
-
   return (
     <div className="app-container">
       {/* 헤더 영역 */}
@@ -32,23 +31,6 @@ function App() {
         </div>
       </nav>
 
-
-  {/* // return (
-  //     <div>
-  //     <nav>
-  //       <div className="button-container">
-  //         <Link to="/" className="button">
-  //           <FaHome style={{ marginRight: '0.5rem' }} />
-  //           Home
-  //         </Link>
-  //         <Link to="/chat" className="button">
-  //           <FaComment style={{ marginRight: '0.5rem' }} />
-  //           Chat
-  //         </Link>
-  //       </div>
-  //     </nav> */}
-
-
 <Routes>
         <Route
           path="/"
@@ -66,7 +48,7 @@ function App() {
         <Route path="/chat" element={<InterviewBot />} />
       </Routes>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

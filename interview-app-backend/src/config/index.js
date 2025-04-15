@@ -1,16 +1,10 @@
-//========== PORT AND API KEY ==========//
+//========== CENTRALISED CONFIGURATION SETTING ==========//
 
-require("dotenv").config()
+require("dotenv").config() // Load environment variables from .env file
 
 const config = {
+  apiKey: process.env.GEMINI_API_KEY,
   port: process.env.PORT,
-  openaiApiKey: process.env.OPENAI_API_KEY,
-}
-
-// Validate the configuration
-if (!config.openAiApiKey) {
-  console.error("Missing OpenAI API key in .env file")
-  process.exit(1) // Exit if API key is missing
 }
 
 module.exports = config

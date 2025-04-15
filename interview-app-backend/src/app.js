@@ -6,22 +6,30 @@ const interviewRoutes = require("./routes/interviewRoutes")
 const app = express()
 
 //========== MIDDLEWARE ==========//
-app.use(cors()) // Enable CORS fro all origins (to be adjusted)
-app.use(express.json()) // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })) // If form data needed to be parsed
+app.use(cors()) // Enable CORS for all origins (for development only)
+app.use(express.json()) // Parses incoming JSON requests
+app.use(express.urlencoded({ extended: true })) // Parses URL-encoded bodies (for form submissions)
 
-//========== BASIC ROOT ROUTE ==========// (TO BE REMOVED)
-app.get("/", (req, res) => {
-  res.send("API is running")
+//========== HEALTH CHECK ==========//
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "UP", timestamp: new Date().toISOString() })
 })
 
-//========== ROUTES ==========//
-app.use("/api/interview", interviewRoutes) // Mount interview routes
+//========== API ROUTES ==========//
+app.use("/api/interview", interviewRoutes)
 
 //========== BASIC ERROR HANDLING ==========//
+// Catch 404 errors
+app.use((req, res, next) => {
+  res.status(404).json({ error: "Not Found" })
+})
+
+// General error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack)
-  res.status(500).send("Something broke!")
+  console.error("Unhandled error: ", err.stack)
+  res
+    .status(err.status || 500)
+    .json({ error: err.message || "Internal Server Error" })
 })
 
 module.exports = app

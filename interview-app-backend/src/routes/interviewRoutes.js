@@ -2,8 +2,8 @@ const express = require("express")
 const router = express.Router()
 const interviewController = require("../controllers/interviewController")
 
-// Route to start an interview
-// POST /api/interview/mock
-router.post("/start", interviewController.startInterview)
+// Route for chat interview
+// POST /api/interview/chat
+router.post("/chat", interviewController.chatInterview)
 
 module.exports = router

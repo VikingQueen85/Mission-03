@@ -1,268 +1,209 @@
+import React, { useState, useEffect, useRef } from "react"
+import "./InterviewBot.css"
 
-import React, { useState } from "react"; 
-import axios from "axios";
-import './InterviewBot.css'; 
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
+const INITIAL_BOT_MESSAGE = `Welcome!! To start the interview simulation, please tell me the job title you are applying for.`
+const SECOND_BOT_MESSAGE = `Okay, let's start the interview for the role: `
 
-function InterviewBot() {
-  const [messages, setMessages] = useState([{ text: "Welcome! What job are you applying for?", isUser: false }]);
-  const [input, setInput] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [questionCount, setQuestionCount] = useState(0);
-  const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showWelcomeMessage, setShowWelcomeMessage] = useState(true);  // State to control the welcome message
-  const [showCompletionMessage, setShowCompletionMessage] = useState(false); // Initially hidden
-  const [showMessages, setShowMessages] = useState(false); // Hide message box initially
+const InterviewBot = () => {
+  /*========== HOOKS ==========*/
+  const messagesEndRef = useRef(null)
 
+  /*========== STATES==========*/
+  const [isLoading, setIsLoading] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const [error, setError] = useState(null)
+  const [hasJobTitle, setHasJobTitle] = useState(false)
+  const [jobTitle, setJobTitle] = useState("")
+  const [input, setInput] = useState("")
+  const [messages, setMessages] = useState([
+    { role: "bot", text: INITIAL_BOT_MESSAGE },
+  ]) // Initial message to be displayed before starting the interview
 
-  const keywordQuestionsMapping = {
-    developer: [
-      "What programming languages are you most proficient in?",
-      "How do you approach debugging and troubleshooting?",
-      "Can you describe a challenging project you've worked on?",
-    ],
-    manager: [
-      "How do you handle team conflicts?",
-      "Can you describe your management style?",
-      "What steps do you take to ensure project completion?",
-    ],
-    designer: [
-      "What design tools do you prefer to use?",
-      "How do you approach user experience design?",
-      "Can you share a portfolio piece that showcases your design skills?",
-    ],
-    nursing: [
-      "What inspired you to become a nurse?",
-      "How do you handle stress while caring for patients?",
-      "Describe a situation where you had to advocate for a patient.",
-    ],
-    // Add more keywords and questions as needed
-  };
+  /*========== FUNCTIONS ==========*/
 
-  const generateQuestions = (jobTitle) => {
-    const lowerJobTitle = jobTitle.toLowerCase();
-    const questions = [];
+  // This function handles the submission of the job title input
+  const handleJobTitleSubmit = e => {
+    e.preventDefault()
 
-    // Gather specific questions based on the job title
-    for (const [keyword, keywordQuestions] of Object.entries(keywordQuestionsMapping)) {
-      if (lowerJobTitle.includes(keyword)) {
-        questions.push(...keywordQuestions);
-      }
-    }
+    // Trim and capitalize the job title
+    const trimmedJobTitle = input
+      .trim()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
 
-    // If there are not enough questions, add generic ones until we have 6
-    while (questions.length < 6) {
-      questions.push("What makes you a good fit for this position?");
-      questions.push("Tell me about a time you faced a challenge at work.");
-    }
+    if (!trimmedJobTitle) return
 
-    // Limit to 6 unique questions to avoid duplicates
-    return questions.slice(0, 6);
-  };
+    setJobTitle(trimmedJobTitle)
 
-  const generateQuestionsWithApi = async (jobTitle) => {
-    const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
-    const apiEndpoint = "https://api.openai.com/v1/engines/davinci/completions";
+    setHasJobTitle(true)
 
-    const prompt = `Generate five interview questions for the job title "${jobTitle}".`;
+    setMessages(prev => [
+      ...prev,
+      {
+        role: "bot",
+        text: SECOND_BOT_MESSAGE + trimmedJobTitle,
+      },
+    ]) // Second bot message to be displayed with the job title
+    setInput("")
+
+    // Send EMPTY messages array to backend for first question generation: "Tell me about yourself"
+    getBotResponse(trimmedJobTitle, [])
+  }
+
+  // This function handles the submission of the user answer input
+  const handleSendAnswer = e => {
+    e.preventDefault()
+
+    if (!input.trim() || isLoading || isComplete) return
+
+    const userAnswer = input.trim()
+
+    setMessages(prev => [...prev, { role: "user", text: userAnswer }])
+
+    setInput("")
+
+    // Send the job title and the current messages to the backend
+    getBotResponse(jobTitle, [...messages, { role: "user", text: userAnswer }])
+  }
+
+  // This function fetches the bot response from the backend API
+  const getBotResponse = async (jobTitle, currentMessages) => {
+    setIsLoading(true)
+
+    setError(null)
 
     try {
-      const response = await axios.post(apiEndpoint, {
-        prompt: prompt,
-        max_tokens: 150,
-        n: 1,
-        stop: null,
-        temperature: 0.7,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetch(API_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jobTitle, messages: currentMessages }),
+      })
 
-      const generatedQuestions = response.data.choices[0].text.trim().split('\n');
-      return generatedQuestions.slice(0, 6); // Limit to 6 questions from the API
-    } catch (error) {
-      console.error("API call failed: ", error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: "Failed to generate questions from the API. Please try again.", isUser: false },
-      ]);
-      return [];
-    }
-  };
+      const responseBody = await response.json()
 
-/************************************************************************* */
-
-
-  const handleJobTitleSubmit = async () => {
-    const trimmedJobTitle = jobTitle.trim();
-
-    if (!trimmedJobTitle) {
-      alert("Please enter a job title.");
-      return;
-    }
-
-    const normalizedJobTitle = trimmedJobTitle.charAt(0).toUpperCase() + trimmedJobTitle.slice(1).toLowerCase();
-
-    // Generate initial questions from predefined mapping
-    let generatedQuestions = generateQuestions(normalizedJobTitle);
-
-    // Call the API if we didn't get any questions
-    if (generatedQuestions.length === 0) {
-      setLoading(true);
-      try {
-        generatedQuestions = await generateQuestionsWithApi(normalizedJobTitle);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        setError(
+          responseBody?.error ||
+            `API request failed (${response.status} ${response.statusText})`
+        )
+        return
       }
+
+      setMessages(prev => [
+        ...prev,
+        { role: "bot", text: responseBody.nextBotMessage },
+      ])
+
+      setIsComplete(responseBody.isComplete)
+    } catch (err) {
+      console.error("API call failed:", err)
+
+      setError("An unexpected error occurred. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // This function renders each message in the chat
+  const renderMessage = (msg, index) => (
+    <div
+      key={index}
+      className={`message ${
+        msg.role === "user" ? "user-message" : "bot-message"
+      }`}>
+      {msg.text.split("\n").map((line, i) => (
+        <span key={i}>
+          {line}
+          <br />
+        </span>
+      ))}
+    </div>
+  )
+
+  // This function renders the input form for the user to enter their answer
+  const renderInputForm = () => {
+    // If the interview is complete, show a completion message
+    if (isComplete) {
+      return (
+        <p className="completion-message">
+          Interview completed. Thank you for your time!
+        </p>
+      )
     }
 
-    // Update messages to indicate the job title
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { text: `You are applying for: ${normalizedJobTitle}`, isUser: false },
-    ]);
-
-    setQuestions(generatedQuestions);
-    setQuestionCount(0);
-    setJobTitle("");
-
-      
-        setShowWelcomeMessage(false);    // Hide welcome message and start interview
-        setShowCompletionMessage(false); // Hide completion message
-        setShowMessages(true);           // Show message box after starting interview
-        // Ask first question
-        askNextQuestion(generatedQuestions);
-      };
-
-      const askNextQuestion = (questionsList) => {
-        if (questionCount < questionsList.length) {
-          const nextQuestion = questionsList[questionCount];
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            { text: nextQuestion, isUser: false }
-          ]);
-          setQuestionCount((prevCount) => prevCount + 1);
-        }
-      };
-
-/************************************************************************* */
-
-  const handleSend = () => {
-    if (!input.trim()) return;
-
-    const userMessage = input;
-    setMessages((prevMessages) => [...prevMessages, { text: userMessage, isUser: true }]);
-    setInput("");
-
-    const isLastQuestion = questionCount === questions.length;
-
-    if (isLastQuestion) {
-      setTimeout(() => {
-        setShowCompletionMessage(true);
-      }, 300); 
-      return;
+    // Input Properties
+    const inputProps = {
+      type: "text",
+      value: input,
+      onChange: e => setInput(e.target.value),
+      disabled: isLoading,
+      autoComplete: "off",
     }
 
-    // // Send answer and move to the next question
-    // if (questionCount === questions.length) {
-    //   setTimeout(() => {
-    //     const finalMessage = "Interview completed. Thank you for your time!";
-    //     setMessages((prevMessages) => [
-    //       ...prevMessages,
-    //       { text: finalMessage, isUser: false },
-    //     ]);
-    //     setShowCompletionMessage(true);
-    //   }, 300); 
-    //   return;
-    // }
-  
-    askNextQuestion(questions);
-  };
+    // Button properties
+    const buttonProps = {
+      type: "submit",
+      disabled: isLoading || !input.trim(),
+    }
 
-  // Moved to CSS :)
-  // const renderMessage = (msg, index) => {
-  //   const messageStyle = {
-  //     padding: "10px",
-  //     margin: "5px 0",
-  //     borderRadius: "5px",
-  //     color: msg.isUser ? "black" : "white",
-  //     backgroundColor: msg.isUser ? "#e0f7fa" : "#333",
-  //     textAlign: msg.isUser ? "right" : "left",
-  //   };
+    //  If the user hasn't entered a job title yet, show the job title input form
+    if (!hasJobTitle) {
+      return (
+        <form onSubmit={handleJobTitleSubmit} className="input-form">
+          <input
+            {...inputProps}
+            placeholder="Enter job title to begin..."
+            aria-label="Job Title Input"
+          />
+          <button {...buttonProps}>Start Interview</button>
+        </form>
+      )
+    }
 
-  //   return (
-  //     <div key={index} style={messageStyle}>
-  //       {msg.text}
-  //     </div>
-  //   );
-  // };
+    return (
+      // If the user has entered a job title, show the answer input form
+      <form onSubmit={handleSendAnswer} className="input-form">
+        <input
+          {...inputProps}
+          placeholder="Type your answer..."
+          aria-label="User Answer Input"
+        />
+        <button {...buttonProps}>{isLoading ? "Thinking..." : "Send"}</button>
+      </form>
+    )
+  }
 
+  /*========== useEffects ==========*/
+
+  // Automatic scrolling to the latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  // Clear error message when input changes
+  useEffect(() => {
+    if (input) setError(null)
+  }, [input])
 
   return (
     <div className="interview-bot">
-      <h2>AI Interview Bot</h2>
-
-   {/* Welcome message and job title input */}
-   {showWelcomeMessage && (
-        <div>
-          <div>Welcome! What job are you applying for?</div>
-          <div className="job-input-container">
-            <input
-              id="job-title"
-              name="job-title"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="Enter job title"
-              autoComplete="off"
-            />
-            <button onClick={handleJobTitleSubmit} disabled={loading}>
-              {loading ? "Loading..." : "Start Interview"}
-            </button>
+      <div className="messages-container">
+        {messages.map(renderMessage)}
+        {isLoading && (
+          <div className="message bot-message typing-indicator">
+            <span>.</span>
+            <span>.</span>
+            <span>.</span>
           </div>
-        </div>
-      )}
-
-      {/* Message box for conversation */}
-      {showMessages && (
-      <div className="message-box">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`message ${msg.isUser ? "user-message" : "bot-message"}`}
-          >
-            {msg.text}
-          </div>
-        ))}
+        )}
+        {error && <div className="message error-message">{error}</div>}
+        <div ref={messagesEndRef} />
       </div>
-    )}
-
-
-      {/* User input box and send button */}
-      {questionCount > 0 && questionCount <= questions.length && !showCompletionMessage && (
-  <>
-    <input
-      id="user-response"
-      name="user-response"
-      className="styled-input"
-      value={input}
-      onChange={(e) => setInput(e.target.value)}
-      placeholder="Your answer"
-    />
-    <button onClick={handleSend}>
-      Send
-    </button>
-  </>
-)}
-
-
-      {/* Interview completion message */}
-      {showMessages && showCompletionMessage && (
-  <p>Interview completed. Thank you for your time!</p>
-)}
+      {renderInputForm()}
     </div>
-  );
+  )
 }
 
-export default InterviewBot;
+export default InterviewBot
