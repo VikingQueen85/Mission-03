@@ -1,9 +1,10 @@
-const interviewService = require("../services/interviewService")
+//========== IMPORTS ==========//
+const interviewService = require("../services/geminiService")
 
-const startInterview = async (req, res) => {
+const chatInterview = async (req, res) => {
   const { jobTitle, messages } = req.body
 
-  // Validate required fields
+  // Input validations
   if (!jobTitle || typeof jobTitle !== "string" || jobTitle.trim() === "") {
     return res.status(400).json({ error: "Valid job title is required." })
   }
@@ -13,35 +14,34 @@ const startInterview = async (req, res) => {
     return res.status(400).json({ error: "Messages must be an array." })
   }
 
-  console.log("Received job title:", jobTitle)
-  console.log("Messages count:", messages.length)
-
   try {
-    // Generate the initial question or next question based on conversation
-    const initialQuestion = await interviewService.generateInitialQuestion(
-      jobTitle
+    console.log(`Controller received chat request for job: "${jobTitle}"`)
+    // Generate the initial question || next question || feedback based on the conversation history
+    const result = await interviewService.processInterviewTurn(
+      jobTitle,
+      messages
     )
 
-    // Create a session if this is a new conversation
-    if (messages.length === 0) {
-      const sessionId = interviewService.createSession(jobTitle)
+    res.status(200).json(result) // Send { nextBotMessage: '...', isComplete: boolean }
+  } catch (error) {
+    console.error("Error in interview controller:", error.message)
 
-      // Store the initial question in conversation history
-      interviewService.conversationHistory[sessionId].push({
-        role: "bot",
-        text: initialQuestion,
+    // Check for specific error types thrown by the service if needed
+    if (error.isSafetyBlock) {
+      // Provide specific feedback for safety issues
+      return res.status(400).json({
+        error: "Request or response blocked due to safety settings.",
+        details: error.message, // Contains reason from service
       })
     }
 
-    // Return the response
-    res.json({
-      nextBotMessage: initialQuestion,
-      isComplete: false, // First question is never the end of interview
+    // General server error
+    res.status(500).json({
+      error:
+        error.message ||
+        "An internal server error occurred while processing the interview chat.",
     })
-  } catch (error) {
-    console.error("Error in interview process:", error)
-    res.status(500).json({ error: error.message || "Internal server error" })
   }
 }
 
-module.exports = { startInterview }
+module.exports = { chatInterview }
