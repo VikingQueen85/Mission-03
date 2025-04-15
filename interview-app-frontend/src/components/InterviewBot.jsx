@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react"
 import "./InterviewBot.css"
 
-const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 const INITIAL_BOT_MESSAGE = `Welcome!! To start the interview simulation, please tell me the job title you are applying for.`
 const SECOND_BOT_MESSAGE = `Okay, let's start the interview for the role: `
 
