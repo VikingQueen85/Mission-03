@@ -1,7 +1,6 @@
-
-import React from 'react';
-import InterviewBot from '../src/components/InterviewBot'; 
-import './App.css'; 
+import React from "react"
+import InterviewBot from "../src/components/InterviewBot"
+import "./App.css"
 
 function App() {
   return (
@@ -13,7 +12,7 @@ function App() {
         <InterviewBot />
       </main>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
