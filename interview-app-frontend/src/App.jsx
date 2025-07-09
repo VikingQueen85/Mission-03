@@ -7,7 +7,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter> {/* This is the crucial part */}
+    <BrowserRouter>
       <div className="app-container">
         <header className="app-header">
           <img

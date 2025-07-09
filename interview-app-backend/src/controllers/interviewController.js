@@ -16,22 +16,19 @@ const chatInterview = async (req, res) => {
 
   try {
     console.log(`Controller received chat request for job: "${jobTitle}"`)
-    // Generate the initial question || next question || feedback based on the conversation history
     const result = await interviewService.processInterviewTurn(
       jobTitle,
       messages
     )
 
-    res.status(200).json(result) // Send { nextBotMessage: '...', isComplete: boolean }
+    res.status(200).json(result)
   } catch (error) {
     console.error("Error in interview controller:", error.message)
 
-    // Check for specific error types thrown by the service if needed
     if (error.isSafetyBlock) {
-      // Provide specific feedback for safety issues
       return res.status(400).json({
         error: "Request or response blocked due to safety settings.",
-        details: error.message, // Contains reason from service
+        details: error.message,
       })
     }
 

@@ -1,69 +1,162 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/-_97V13W)
 
-# Mission 3 Readme
+This project implements an AI-powered mock interviewer designed to boost interview confidence. It allows users to practice answering realistic questions tailored to a specific job role. Our AI interviewer adapts to user answers and provides helpful feedback after a set number of questions to aid in improvement.
 
-Boost your interview confidence! Practice answering realistic questions tailored to your target job role. Our AI interviewer adapts to your answers and provides helpful feedback after about 6 questions to help you improve. Enter the job title below to start.
+This was a collaborative group project where all contributors worked together across the various folders and files, leveraging GitHub for version control and teamwork.
 
-## Installation
+Key Features
+Adaptive AI Interviewer: The AI dynamically asks questions based on the user's input and the specified job title.
 
-- Clone Git repository
+Realistic Interview Simulation: Provides a conversational flow, starting with common opening questions and progressing through job-specific inquiries.
 
-- This project consists of two main parts:
+Personalized Feedback: After approximately 6 questions, the AI reviews the conversation and offers constructive feedback to help users refine their responses.
 
-  - Backend: A Node.js/Express server that handles communication with the Google Gemini API.
+Role-Specific Questions: Interview questions are tailored to the job title provided by the user, ensuring relevant practice.
 
-  ```bash
-    cd <path to backend folder>
-    npm install
-    npm run dev
-  ```
+User-Friendly Interface: A simple chat interface allows seamless interaction with the AI.
 
-  - Frontend: A React application (using Vite) that provides the user interface for the chat bot.
+Installation
+This project consists of two main parts: a Node.js/Express backend and a React (Vite) frontend. Both need to be set up and run.
 
-  ```bash
-    cd <path to frontend folder>
-    npm install
-    npm run dev
-  ```
+Prerequisites:
+Node.js: Ensure Node.js is installed on your system.
 
-- Access the application
+Git: For cloning the repository.
 
-### Prerequisites:
+Code Editor: Such as VS Code.
 
-- Node.js
-- Git
-- Code Editor
-- Google Gemini API Key
+Google Gemini API Key: Essential for the backend to communicate with the AI.
 
-## More Details
+Setup Steps:
+Clone the Repository:
 
-This is a website that helps you practice for job interviews using an AI interviewer.
+git clone https://github.com/VikingQueen85/Mission-03.git
+cd Mission-03 # Or the root directory of your cloned project
 
-`How it works:`
+Backend Setup:
+Navigate to the backend folder and install its dependencies.
 
-- You Enter a Job Title: Tell the app what job you're applying for (like "Teacher" or "Web Developer").
+cd interview-app-backend
+npm install
 
-- AI Asks Questions:
+Configure Environment Variables for Backend:
+Create a .env file in the interview-app-backend directory (at the same level as package.json).
+Add your Google Gemini API key:
 
-  - An AI chatbot starts an interview, beginning with "Tell me about yourself." It then asks about 6 more questions related to that job, based on your answers.
+GEMINI_API_KEY=YOUR_GOOGLE_GEMINI_API_KEY
 
-- You Answer:
+Replace YOUR_GOOGLE_GEMINI_API_KEY with your actual key.
+Ensure .env is added to your backend's .gitignore file to prevent accidental public exposure.
 
-  - Type your answers into the chat, just like a text message.
+Start the Backend Server:
 
-- Get Feedback:
+npm run dev
 
-  - After the questions, the AI reviews your answers and gives you tips on what you did well and how you could improve for a real interview for that job.
+The server should start on http://localhost:5001.
 
-`Why use it?`
+Frontend Setup:
+Open a new terminal window, navigate to the frontend folder, and install its dependencies.
 
-- Practice answering common interview questions for a specific role.
-- Get comfortable with the interview flow.
-- Receive helpful feedback to improve your answers.
-- Build confidence before your actual interview.
+cd ../interview-app-frontend
+npm install
 
-## Contributors
+Configure Environment Variables for Frontend:
+Create a .env file in the interview-app-frontend directory (at the same level as package.json).
+This variable tells the React app where to find the backend API:
 
-- Tessa --- `VikingQueen85`
-- Sherelynn --- `sherelynn`
-- Clark --- `hiu03052`
+VITE_API_ENDPOINT=http://localhost:5001/api/interview/chat
+
+Ensure .env is added to your frontend's .gitignore file.
+
+Start the Frontend Application:
+
+npm run dev
+
+The React application will typically open in your browser at http://localhost:5173.
+
+More Details
+This website provides a dynamic and interactive platform for job interview preparation.
+
+How it Works:
+Enter a Job Title: You begin by specifying the job role you're applying for (e.g., "Software Engineer", "Marketing Manager", "Teacher").
+
+AI Asks Questions: An AI chatbot, powered by Google Gemini, initiates the interview. It starts with a common opening like "Tell me about yourself" and then dynamically generates approximately 6 more questions based on the job title and your previous responses.
+
+You Answer: You type your answers into the chat interface, simulating a real-time conversation.
+
+Get Feedback: After the set number of questions, the AI reviews your entire conversation, providing insights into your strengths and offering actionable tips for improvement tailored to the specific job role.
+
+Why Use It?
+Practice answering common and job-specific interview questions.
+
+Become comfortable with the typical interview flow and pacing.
+
+Receive instant, personalized feedback to refine your answers.
+
+Build confidence and reduce anxiety before your actual job interviews.
+
+Technology Stack
+Backend (Node.js/Express.js):
+
+Handles API requests from the frontend.
+
+Manages communication with the Google Gemini API using the @google/generative-ai SDK.
+
+Uses dotenv for secure environment variable loading (e.g., GEMINI_API_KEY).
+
+Implements cors middleware to enable cross-origin requests from the frontend during development.
+
+nodemon is used for automatic server restarts during development.
+
+Frontend (React with Vite):
+
+Provides the interactive chat user interface.
+
+Built with Vite for a fast development experience.
+
+Fetches responses from the backend API using standard fetch calls.
+
+Manages chat state, user input, and displays AI responses.
+
+AI (Google Gemini API):
+
+The core intelligence behind the mock interviewer, responsible for generating questions and providing feedback based on its prompt and conversation history.
+
+Testing (Jest & Supertest):
+
+Jest is used for unit and integration testing of backend logic.
+
+Supertest assists in testing API endpoints.
+
+Hosting: Azure
+
+API Endpoints
+The backend exposes the following primary API endpoint for chat interaction:
+
+POST /api/interview/chat:
+
+Purpose: Sends user messages and receives AI bot responses.
+
+Request Body (JSON):
+
+{
+    "jobTitle": "string",
+    "messages": [
+        { "role": "user" | "bot", "text": "string" }
+    ]
+}
+
+Response Body (JSON):
+
+{
+    "nextBotMessage": "string",
+    "isComplete": "boolean"
+}
+
+Contributors
+This project was a collaborative effort by:
+
+Tessa - VikingQueen85
+
+Sherelynn - sherelynn
+
+Clark - hiu03052

@@ -1,9 +1,9 @@
+
 //========== IMPORTS ==========//
 const config = require("../config/index")
-// const fetch = require("node-fetch") // Uncomment if using older version of Node and run "npm install node-fetch"
 
 //========== CONSTANTS ==========//
-const GEMINI_MODEL = "gemini-2.0-flash" // This can be changed to a preferred model
+const GEMINI_MODEL = "gemini-2.0-flash"
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${config.apiKey}` // Check if this is the correct URL for the chosen model
 
 //================================================================//
@@ -21,7 +21,6 @@ const formatMessagesForPrompt = messages => {
 
 //========== PROMPTS ==========//
 
-// Prompt for generating the questions
 const generateQuestionPrompt = (jobTitle, conversationHistory) => {
   const basePrompt = `You are an AI hiring manager conducting an interview for the role of "${jobTitle}". Keep your questions concise and focused. Ask only one question per turn. Do not add conversational filler like "Okay, great." before or after the question. The first question should be: "Tell me about yourself."`
 
@@ -63,7 +62,6 @@ const generateFeedbackPrompt = (jobTitle, conversationHistory) => {
 
 //========== FUNCTION TO CALL GEMINI API ==========//
 const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
-  // Body of the request to the Gemini API
   const apiRequestBody = {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
@@ -92,17 +90,14 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
 
   // Logging the API URL, request body, and prompt for debugging
   console.log(
-    // Log the API URL (excluding sensitive information)
     "Sending request to Gemini API URL:",
-    GEMINI_API_URL.replace(config.apiKey, "[REDACTED_KEY]") // Don't log the full key
+    GEMINI_API_URL.replace(config.apiKey, "[REDACTED_KEY]")
   )
   console.log(
-    // Log the request body, omitting the prompt text for security
     "Gemini Request Body (excluding prompt text):",
     JSON.stringify({ ...apiRequestBody, contents: "[PROMPT OMITTED]" }, null, 2)
   )
   console.log(
-    // Log the prompt text separately for debugging
     "Prompt being sent to Gemini (first ~200 chars):",
     prompt.substring(0, 200) + "..."
   )
@@ -115,10 +110,8 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
       body: JSON.stringify(apiRequestBody),
     })
 
-    // Always try to parse JSON, even for errors
     const responseBody = await response.json().catch(err => {
       console.error("Failed to parse Gemini response as JSON:", err)
-      // If JSON parsing fails, throw error with status text if available
       throw new Error(
         `Gemini API request failed with status ${response.status} ${response.statusText}. Non-JSON response received.`
       )
@@ -131,8 +124,6 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
         JSON.stringify(responseBody, null, 2)
       )
 
-      // Check if the error message is present in the response
-      // If not, use a generic error message
       let errorMessage =
         responseBody?.error?.message ||
         `Gemini API request failed with status ${response.status}`
@@ -171,7 +162,6 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
 
     // Check if the generated text is empty or undefined
     if (!generatedText) {
-      // Log the full response body fro debugging unknown issues
       console.error(
         "Gemini API response missing expected text content: ",
         JSON.stringify(responseBody, null, 2)
@@ -186,7 +176,7 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
           "Gemini API returned an empty text response. Finish Reason: ",
           responseBody.candidates[0].finishReason
         )
-        return "" // Return empty string instead of error for STOP/MAX_TOKENS
+        return ""
       }
 
       // Handle if the response was blocked for other reasons
@@ -203,12 +193,9 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
     }
 
     // Successful text generation: Return it
-    return generatedText.trim() // Trim whitespace from the generated text
+    return generatedText.trim()
   } catch (error) {
-    // Log the caught error (could be fetch error, JSON parse error, or error thrown above)
     console.error("Error during Gemini API call processing:", error)
-
-    // Re-throw the error so the controller can handle it
     throw error
   }
 }
@@ -218,9 +205,7 @@ const callGeminiApi = async (prompt, shouldGenerateFeedback) => {
 //================================================================//
 
 const processInterviewTurn = async (jobTitle, messages) => {
-  // Constants
-  const MAX_INTERVIEW_QUESTIONS = 7 //  Including "Tell me about yourself"
-
+  const MAX_INTERVIEW_QUESTIONS = 7
   const trimmedJobTitle = jobTitle.trim()
   const formattedHistory = formatMessagesForPrompt(messages)
   const userTurns = messages.filter(m => m.role === "user").length
@@ -236,14 +221,11 @@ const processInterviewTurn = async (jobTitle, messages) => {
     )
     prompt = generateFeedbackPrompt(trimmedJobTitle, formattedHistory)
   } else {
-    // If max questions not reached, generate the next question
-    const questionNumber = userTurns + 1 // Calculate which question number this is
+    const questionNumber = userTurns + 1
     console.log(`Generating question ${questionNumber} for "${trimmedJobTitle}`)
     prompt = generateQuestionPrompt(trimmedJobTitle, formattedHistory)
   }
-
   try {
-    // Call the Gemini API with the generated prompt
     const generatedText = await callGeminiApi(prompt, shouldGenerateFeedback)
     return {
       nextBotMessage: generatedText,

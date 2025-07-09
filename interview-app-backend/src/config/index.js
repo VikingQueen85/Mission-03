@@ -1,6 +1,7 @@
+
 //========== CENTRALISED CONFIGURATION SETTING ==========//
 
-require("dotenv").config() // Load environment variables from .env file
+require("dotenv").config()
 
 const config = {
   apiKey: process.env.GEMINI_API_KEY,
